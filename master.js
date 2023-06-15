@@ -3,19 +3,11 @@ let input = document.querySelector("input");
 let add = document.querySelector(".add");
 let tasksArr = [];
 let tasksContainer = document.querySelector(".tasks");
-let importArr = [];
 let allTasks = document.querySelector(".all-tasks span"),
   completedTasks = document.querySelector(".completed span");
 
 if (window.localStorage.getItem("tasks")) {
   importStorage();
-  for (let i = 0; i < importArr[0].length; i++) {
-    addElements(
-      importArr[0][i].title,
-      importArr[0][i].id,
-      importArr[0][i].classes
-    );
-  }
 }
 
 if (window.localStorage.getItem("completed-tasks")) {
@@ -27,11 +19,12 @@ window.onload = function () {
 };
 // import from local Storage
 function importStorage() {
-  importArr = [];
-  importArr.push(JSON.parse(window.localStorage.getItem("tasks")));
+  let importArr = JSON.parse(window.localStorage.getItem("tasks"));
+  for (let i = 0; i < importArr.length; i++) {
+    addElements(importArr[i].title, importArr[i].id, importArr[i].classes);
+  }
 }
 
-importStorage();
 // add on click
 add.addEventListener("click", function () {
   if (input.value.toString().trim() !== "") {
@@ -76,13 +69,10 @@ tasksContainer.addEventListener("click", function (el) {
     el.target.parentElement.classList.contains("task") &&
     !el.target.classList.contains("del")
   ) {
-    if (el.target.parentElement.classList.contains("done")) {
-      el.target.parentElement.classList.remove("done");
-      completedTasks.innerHTML = parseInt(completedTasks.innerHTML) - 1;
-    } else {
-      el.target.parentElement.classList.add("done");
-      completedTasks.innerHTML = parseInt(completedTasks.innerHTML) + 1;
-    }
+    el.target.parentElement.classList.toggle("done");
+    completedTasks.innerHTML = Array.from(
+      document.querySelectorAll(".tasks .task")
+    ).filter((el) => el.classList.contains("done")).length;
     addClassDone(el.target.parentElement);
   }
   window.localStorage.setItem(
@@ -138,30 +128,24 @@ function removeElementsFromStorage(element) {
 
 // add class done and remove it from local storage
 function addClassDone(element) {
-  importStorage();
-  for (i in importArr[0]) {
-    if (importArr[0][i].title === element.getAttribute("title")) {
+  for (i in tasksArr) {
+    if (tasksArr[i].title === element.getAttribute("title")) {
       element.classList.contains("done")
-        ? (importArr[0][i].classes[1] = "done")
-        : (importArr[0][i].classes[1] = null);
+        ? (tasksArr[i].classes[1] = "done")
+        : (tasksArr[i].classes[1] = null);
     } else continue;
   }
-  window.localStorage.setItem("tasks", JSON.stringify(importArr[0]));
+  window.localStorage.setItem("tasks", JSON.stringify(tasksArr));
 }
 
 // Delete All tasks
 let deleteAll = document.getElementById("delete-all");
 deleteAll.addEventListener("click", function () {
-  document.querySelectorAll(".tasks .task").forEach((el) => {
-    if (el.classList.contains("done")) {
-      completedTasks.innerHTML = parseInt(completedTasks.innerHTML) - 1;
-    }
-    deleteElements(el);
-    window.localStorage.setItem(
-      "completed-tasks",
-      parseInt(completedTasks.innerHTML)
-    );
-  });
+  tasksContainer.innerHTML = "";
+  window.localStorage.removeItem("tasks");
+  completedTasks.innerHTML = 0;
+  allTasks.innerHTML = 0;
+  window.localStorage.setItem("completed-tasks", 0);
 });
 
 // Complete All Tasks
